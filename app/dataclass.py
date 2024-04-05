@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-
+from pydantic import BaseModel, field_validator
 
 class CAutoencoderParam(BaseModel):
     lr: float = 1e-3
@@ -13,6 +12,20 @@ class AutoencoderParam(BaseModel):
     hidden_dim: int | None = None
     botlneck: int | None = None
 
+    # @field_validator('hidden_dim')
+    # @classmethod
+    # def validate_hm(hidden_dim: int ) -> int:
+    #     if hidden_dim < 2:
+    #         raise ValueError()
+    #     return hidden_dim
+
+    # @field_validator('botlneck')
+    # @classmethod
+    # def validate_btn(botlneck: int ) -> int:
+    #     if botlneck < 2:
+    #         raise ValueError()
+    #     return botlneck
+
 
 class DataPrepareParams(BaseModel):
     use_filter_in_table: bool = False
@@ -23,8 +36,12 @@ class DataPrepareParams(BaseModel):
     scale: bool = True
     norm: bool = False
 
-    def validate_splits():
-       pass
+    # @field_validator('type_of_split')
+    # @classmethod
+    # def validate_mode(type_of_split: str ) -> str:
+    #     if type_of_split not in ['random', 'last']:
+    #         raise ValueError()
+    #     return type_of_split
 
 
 class ModelParams(BaseModel):
@@ -36,30 +53,39 @@ class EarlyStop(BaseModel):
     patience: int = 3
     mode: str = "min"
 
-    def validate_mode():
-        pass
+    # @field_validator('mode')
+    # @classmethod
+    # def validate_mode(mode: str ) -> str:
+    #     if mode not in ['min', 'max']:
+    #         raise ValueError()
+    #     return mode
 
 class CheckPoint(BaseModel):
-  save_top_k : int = 5
-  save_weights_only : bool = False
-  # change here to True because we save at the end best model (think about it)
+    save_top_k : int = 5
+    save_weights_only : bool = False
+    # change here to True because we save at the end best model (think about it)
 
 
 class Trainer(BaseModel):
-  log_every: int = 2
-  max_epochs: int = 4
-  enable_checkpointing: bool = True
+    log_every: int = 2
+    max_epochs: int = 4
+    enable_checkpointing: bool = True # move out
 
 
 class Mlflow(BaseModel):
     exp_name: str
     run_name: str
 
-    def validate_experiment_name():
-        pass
+    # @field_validator('exp_name')
+    # @classmethod
+    # def validate_experiment_name(cls, exp_name: str) -> str:
+    #     return exp_name
 
-    def validate_run_name():
-        pass
+    # @field_validator('run_name')
+    # @classmethod
+    # def validate_run_name(cls, run_name: str) -> str:
+    #     return run_name
+
 
 
 class ConfigRun(BaseModel):
@@ -69,7 +95,6 @@ class ConfigRun(BaseModel):
     chkp: CheckPoint
     trainer: Trainer
     mlflow: Mlflow
-
 
 class DataURL(BaseModel):
     pass
@@ -82,3 +107,16 @@ class ModelArtifactsURL(BaseModel):
 class ModelURI(BaseModel):
     pass
     # add validation
+
+
+class ExportModel(BaseModel):
+    project_id: int # str ?
+    run_id: str
+    export_type: str = 'best'
+
+    # @field_validator('export_type')
+    # @classmethod
+    # def validate_export_type(export_type: str) -> str:
+    #     if export_type not in ['best', 'last']:
+    #         raise ValueError()
+    #     return export_type
