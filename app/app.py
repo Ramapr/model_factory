@@ -6,8 +6,8 @@ from fastapi import UploadFile
 from starlette.datastructures import UploadFile as upf
 import json
 
-
 from utils import get_list_of_configs
+from utils import check_env_var
 
 app = FastAPI(title="ML models factory 🤖 🏭 ",
     description="Сервис для построения и обучения мл моделей",
@@ -17,7 +17,9 @@ app = FastAPI(title="ML models factory 🤖 🏭 ",
 
 @app.on_event("startup")
 async def startup_event():
-    pass
+    """
+    """
+    check_env_var()
 
 
 @app.get("/models_configs")
