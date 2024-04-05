@@ -3,6 +3,7 @@ import yaml
 import json
 from dotenv import dotenv_values
 
+
 def get_list_of_configs(path: str = './models') -> dict:
     output = {}
     models = list(filter(lambda x: not x.startswith('__') and '.' not in x,  os.listdir(path)))
@@ -30,3 +31,10 @@ def check_env_var(path: str = './models') -> bool :
         except Exception as e:
             raise KeyError(e)
 
+
+def create_dir(root_path: str, dirname: str) -> str:
+    dir_path = os.path.join(root_path, dirname)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print(f'INFO : dir \'{dirname}\' created')
+    return dir_path
