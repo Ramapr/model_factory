@@ -121,13 +121,24 @@ class ModelURI(BaseModel):
 
 
 class ExportModel(BaseModel):
-    project_id: int # str ?
-    run_id: str
+    artifacts_uri: str
     export_type: str = 'best'
 
-    model_config = ConfigDict(
-        protected_namespaces=(),
-    )
+    @field_validator('artifacts_uri')
+    @classmethod
+    def validate_artifacts_uri(cls, artifacts_uri: str) -> str:
+        # f's3://mlflow-artifacts/{proj_num}/{run_id}/artifacts'
+        host, path = artifacts_uri.split('//')
+        if not host.startswith('s3'):
+            raise ValueError()
+        if not path.startswith('mlflow-artifacts'):
+            raise ValueError()
+        if not path.endswith('artifacts'):
+            raise ValueError()
+        if path.split('/') != 3:
+            raise ValueError()
+        return artifacts_uri
+
 
     @field_validator('export_type')
     @classmethod
