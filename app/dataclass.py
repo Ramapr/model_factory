@@ -1,4 +1,8 @@
 from pydantic import BaseModel, field_validator
+from fastapi import UploadFile
+from pydantic import ConfigDict
+
+
 
 class CAutoencoderParam(BaseModel):
     lr: float = 1e-3
@@ -12,19 +16,19 @@ class AutoencoderParam(BaseModel):
     hidden_dim: int | None = None
     botlneck: int | None = None
 
-    # @field_validator('hidden_dim')
-    # @classmethod
-    # def validate_hm(hidden_dim: int ) -> int:
-    #     if hidden_dim < 2:
-    #         raise ValueError()
-    #     return hidden_dim
+    @field_validator('hidden_dim')
+    @classmethod
+    def validate_hm(cls, hidden_dim: int ) -> int:
+        if hidden_dim < 2:
+            raise ValueError()
+        return hidden_dim
 
-    # @field_validator('botlneck')
-    # @classmethod
-    # def validate_btn(botlneck: int ) -> int:
-    #     if botlneck < 2:
-    #         raise ValueError()
-    #     return botlneck
+    @field_validator('botlneck')
+    @classmethod
+    def validate_btn(cls, botlneck: int ) -> int:
+        if botlneck < 2:
+            raise ValueError()
+        return botlneck
 
 
 class DataPrepareParams(BaseModel):
@@ -36,12 +40,12 @@ class DataPrepareParams(BaseModel):
     scale: bool = True
     norm: bool = False
 
-    # @field_validator('type_of_split')
-    # @classmethod
-    # def validate_mode(type_of_split: str ) -> str:
-    #     if type_of_split not in ['random', 'last']:
-    #         raise ValueError()
-    #     return type_of_split
+    @field_validator('type_of_split')
+    @classmethod
+    def validate_mode(cls, type_of_split: str ) -> str:
+        if type_of_split not in ['random', 'last']:
+            raise ValueError()
+        return type_of_split
 
 
 class ModelParams(BaseModel):
@@ -53,12 +57,12 @@ class EarlyStop(BaseModel):
     patience: int = 3
     mode: str = "min"
 
-    # @field_validator('mode')
-    # @classmethod
-    # def validate_mode(mode: str ) -> str:
-    #     if mode not in ['min', 'max']:
-    #         raise ValueError()
-    #     return mode
+    @field_validator('mode')
+    @classmethod
+    def validate_mode(cls, mode: str ) -> str:
+        if mode not in ['min', 'max']:
+            raise ValueError()
+        return mode
 
 class CheckPoint(BaseModel):
     save_top_k : int = 5
@@ -76,15 +80,15 @@ class Mlflow(BaseModel):
     exp_name: str
     run_name: str
 
-    # @field_validator('exp_name')
-    # @classmethod
-    # def validate_experiment_name(cls, exp_name: str) -> str:
-    #     return exp_name
+    @field_validator('exp_name')
+    @classmethod
+    def validate_experiment_name(cls, exp_name: str) -> str:
+        return exp_name
 
-    # @field_validator('run_name')
-    # @classmethod
-    # def validate_run_name(cls, run_name: str) -> str:
-    #     return run_name
+    @field_validator('run_name')
+    @classmethod
+    def validate_run_name(cls, run_name: str) -> str:
+        return run_name
 
 
 
@@ -99,10 +103,17 @@ class ConfigRun(BaseModel):
 class DataURL(BaseModel):
     pass
 
+class TrainRequest(BaseModel):
+    username: str
+    config: ConfigRun
+    data: DataURL
+    test_data: DataURL
+
 
 class ModelArtifactsURL(BaseModel):
     pass
     # add validation
+
 
 class ModelURI(BaseModel):
     pass
@@ -114,9 +125,13 @@ class ExportModel(BaseModel):
     run_id: str
     export_type: str = 'best'
 
-    # @field_validator('export_type')
-    # @classmethod
-    # def validate_export_type(export_type: str) -> str:
-    #     if export_type not in ['best', 'last']:
-    #         raise ValueError()
-    #     return export_type
+    model_config = ConfigDict(
+        protected_namespaces=(),
+    )
+
+    @field_validator('export_type')
+    @classmethod
+    def validate_export_type(cls, export_type: str) -> str:
+        if export_type not in ['best', 'last']:
+            raise ValueError('text')
+        return export_type
