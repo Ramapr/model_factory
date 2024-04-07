@@ -2,6 +2,9 @@ import os
 import yaml
 import json
 from dotenv import dotenv_values
+import shutil
+import importlib
+import inspect
 
 
 def get_list_of_configs(path: str = './models') -> dict:
@@ -38,3 +41,33 @@ def create_dir(root_path: str, dirname: str) -> str:
         os.makedirs(dir_path)
         print(f'INFO : dir \'{dirname}\' created')
     return dir_path
+
+
+def drop_files_from_dir(folder):
+    # check here
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+
+def write_file2fs(path, data):
+    """
+    open cached file to write to file system
+    move to io
+    """
+    data_path = os.path.join(path, data.filename)
+    contents = data.file.read()
+    with open(data_path, 'wb') as f:
+        f.write(contents)
+    data.file.close()
+    return data_path
+
+
+
+
