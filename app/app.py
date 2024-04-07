@@ -9,10 +9,11 @@ from time import sleep
 import os
 
 from dataclass import ConfigRun, DataURL, ExportModel
+from utils import select_model
 from utils import get_list_of_configs
 from utils import check_env_var
 from utils import drop_files_from_dir
-from mlflow_utils import load_model_artifacts, get_params, select_model, load_checkpoint, dump_model
+# from export_utils import load_model_artifacts, get_params, select_model, load_checkpoint, dump_model
 
 from pathlib import Path
 
@@ -63,6 +64,10 @@ async def train(username: str,
     #cfg
     kv = {'test': 0.1, 'train': 10}
     background_tasks.add_task(train_func, kv=kv)
+    url = 'http:basic-mlflow-uri'
+    exp_id = '1234'
+    run_id = 'efvwewpijnegb0203tguoqnt'
+    return {'message': 'ok', 'url': f"{url}/#/experiments/{exp_id}/runs/{run_id}"}
 
 
 @app.post("/train/file/")
@@ -75,7 +80,19 @@ async def train(username: str,
     #pass
     #cfg
     kv = {'test': 0.1, 'train': 10}
+    # make all checks
+    """
+    config - correct
+    data is ok
+    mlflow proj can be created
+
+    run training
+    """
+    url = 'http:basic-mlflow-uri'
+    exp_id = '1234'
+    run_id = 'efvwewpijnegb0203tguoqnt'
     background_tasks.add_task(train_func, kv=kv)
+    return {'message': 'ok', 'url': f"{url}/#/experiments/{exp_id}/runs/{run_id}"}
 
 
 @app.post("/run")
@@ -84,13 +101,14 @@ async def run(model_link: str,
               ):
     pass
 
+
 @app.post("/export")
 async def export(params: ExportModel):
     pass
     try:
         local_artifact_path = load_model_artifacts(params)
         model_dict = get_params(local_artifact_path)
-        model = select_model(model_dict['model_type'])(**model_dict['layers'])
+        model = select_model(model_dict['model_type'])(**model_dict['layers']) # check
 
         checkpoint = load_checkpoint(local_artifact_path)
         model.load_state_dict(checkpoint["state_dict"])

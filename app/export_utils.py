@@ -38,8 +38,3 @@ def dump_model(model, path):
         model_file = f.read()
 
     return model_file
-
-
-def select_model(model_name: str) -> object:
-
-    raise NotImplementedError
