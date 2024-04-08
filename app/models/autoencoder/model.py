@@ -4,10 +4,10 @@ Created on Fri Feb  3 12:03:28 2023
 
 @author: r.osipovskiy
 """
-import pytorch_lightning as pl
-from pytorch_lightning import callbacks, cli_lightning_logo, LightningDataModule, LightningModule, Trainer
-from pytorch_lightning.callbacks import EarlyStopping
-    
+# import pytorch_lightning as pl
+from pytorch_lightning import LightningModule #callbacks, cli_lightning_logo, LightningDataModule, LightningModule, Trainer
+# from pytorch_lightning.callbacks import EarlyStopping
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -21,12 +21,12 @@ class LitAutoEncoder(LightningModule):
     )
     """
 
-    def __init__(self, 
-                 input_features: int, 
+    def __init__(self,
+                 input_features: int,
                  hidden_dim = None,
                  bottleneck = None,
                  lr: float = 1e-3):
-        
+
         super().__init__()
 
         hidden_dim = hidden_dim if isinstance(hidden_dim, int) else input_features // 2
@@ -37,10 +37,10 @@ class LitAutoEncoder(LightningModule):
         self.lr = lr
         self.encoder = nn.Sequential(nn.Linear(input_features, hidden_dim), nn.ReLU(),
                                      nn.Linear(hidden_dim, bottleneck))
-        
+
         self.decoder = nn.Sequential(nn.Linear(bottleneck, hidden_dim), nn.ReLU(),
                                      nn.Linear(hidden_dim, input_features))
-        
+
         self.example_input_array = torch.randn(1, input_features)
 
     def forward(self, x):
@@ -60,11 +60,11 @@ class LitAutoEncoder(LightningModule):
 
     def _prepare_batch(self, batch):
         x, _ = batch
-        # check dim 
+        # check dim
         return x.view(x.size(0), -1)
 
     def _common_step(self, batch, batch_idx, stage: str):
         x = self._prepare_batch(batch)
-        loss = F.mse_loss(x, self(x)) 
+        loss = F.mse_loss(x, self(x))
         self.log(f"{stage}_loss", loss, on_step=True)
-        return loss 
+        return loss
