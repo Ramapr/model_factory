@@ -69,33 +69,36 @@ def write_file2fs(path, data):
     return data_path
 
 
-def select_model(module_name: str) -> object:
+def selection(module_name: str, submodule_name:str) -> object:
     '''
     move to model-utils
-    '''
-    # step 0 find all model modules
-    modules = list(filter(lambda x: not x.startswith('.') and not x.startswith('__') and not x.endswith('.py'), os.listdir('./models')))
 
+    # step 0 find all model modules
+    # step 1 find file with model class . file where class model exists
+    # step 2 import that module
+    # step 3 find name of class and import it
+    '''
+    modules = list(filter(lambda x: not x.startswith('.') and not x.startswith('__') and not x.endswith('.py'), os.listdir('./models')))
     if module_name not in modules:
         raise Exception('cannot find specifies module name')
 
-    # step 1 find file with model class
-    # we know that target file starts with `m` letter # fixme
-    class_files = list(filter(lambda x: x.startswith('m') and x.endswith('.py'), os.listdir('./' + module_name)))
+    class_files = list(filter(lambda x: not x.startswith(submodule_name), os.listdir('./' + module_name)))
     if len(class_files) != 1:
         raise Exception('cannot find target file')
 
     class_file = class_files[0].split('.')[0]
-    # file where class model exists
-
-    # step 2 improt that module
     module = importlib.import_module('models.' + module_name + '.' + class_file)
     # get name of classes
 
-    # step 3 find name of class and import it
     class_list = [cls_name for cls_name, cls_obj in inspect.getmembers(module) if inspect.isclass(cls_obj)]
-    class_name = list(filter(lambda x: x.endswith('_model'), class_list))
-    if len(class_name) != 1:
+    if len(class_list) != 1:
         raise Exception('cannot find target class name ')
+    return getattr(module, class_list[0])
 
-    return getattr(module, class_name[0])
+
+def select_model(module_name: str):
+    return selection(module_name, 'model')
+
+
+def select_dset(module_name: str):
+    return selection(module_name, 'data')
