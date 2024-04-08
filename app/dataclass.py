@@ -8,7 +8,7 @@ class CAutoencoderParam(BaseModel):
     lr: float = 1e-3
     hidden_dim: int | None = None
     botlneck: int | None = None
-    skip_ouput_fetures: int
+    skip_ouput_features: int
 
 
 class AutoencoderParam(BaseModel):
@@ -20,15 +20,20 @@ class AutoencoderParam(BaseModel):
     @classmethod
     def validate_hm(cls, hidden_dim: int ) -> int:
         if hidden_dim < 2:
-            raise ValueError()
+            raise ValueError('Hidden dim cannot be  less than 2')
         return hidden_dim
 
     @field_validator('botlneck')
     @classmethod
     def validate_btn(cls, botlneck: int ) -> int:
         if botlneck < 2:
-            raise ValueError()
+            raise ValueError('botlneck dim cannot be  less than 2')
         return botlneck
+
+
+class NormScaleParam(BaseModel):
+    scale: bool = True
+    norm: bool = False
 
 
 class DataPrepareParams(BaseModel):
@@ -37,8 +42,7 @@ class DataPrepareParams(BaseModel):
     type_of_split: str = 'random'
     bs: int = 64
     workers: int = 0
-    scale: bool = True
-    norm: bool = False
+    preprocessing: NormScaleParam
 
     @field_validator('type_of_split')
     @classmethod
@@ -91,6 +95,10 @@ class Mlflow(BaseModel):
         return run_name
 
 
+class InferenceData(BaseModel):
+    same_as_train: True
+    preprocessing: NormScaleParam | None
+
 
 class ConfigRun(BaseModel):
     dataprepare: DataPrepareParams
@@ -99,6 +107,7 @@ class ConfigRun(BaseModel):
     chkp: CheckPoint
     trainer: Trainer
     mlflow: Mlflow
+    inf_data: InferenceData | None = None
 
 class DataURL(BaseModel):
     pass
