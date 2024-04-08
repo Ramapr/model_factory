@@ -15,7 +15,7 @@ from utils import check_env_var
 from utils import drop_files_from_dir
 
 from io import save_data
-
+from train_utils import ExpTracker
 
 # from export_utils import load_model_artifacts, get_params, select_model, load_checkpoint, dump_model
 
@@ -53,16 +53,10 @@ async def get_models_configs():
     return {'message': 'ok', 'content': json.dump(get_list_of_configs())}
 
 
-def train_func(**kv):
-    sleep(15)
-    print(kv)
-    sleep(15)
+def train_func(*args):
     pass
-
-
-    model = select_model()(  config.params )
-    train, valid,  = get_loaders()
-    main_train_function()
+    # model = select_model()(  config.params )
+    # main_train_function()
 
 
 
@@ -70,7 +64,7 @@ def train_func(**kv):
 async def train(username: str,
                 cfg: ConfigRun,
                 data_link: str, #DataURL,
-                test_link: str | None, #DataURL,
+                test_link: str, #DataURL,
                 background_tasks: BackgroundTasks):
 
     path = os.environ['tmp_dir']
@@ -78,14 +72,21 @@ async def train(username: str,
     if test_link:
         test_path = save_data(test_link, path)
 
-    #pass
-    #cfg
-    kv = {'test': 0.1, 'train': 10}
-    background_tasks.add_task(train_func, kv=kv)
-    url = 'http:basic-mlflow-uri'
-    exp_id = '1234'
-    run_id = 'efvwewpijnegb0203tguoqnt'
-    return {'message': 'ok', 'url': f"{url}/#/experiments/{exp_id}/runs/{run_id}"}
+    exp_track = ExpTracker(exp_name=cfg.mlflow.exp_name,
+                           run_name=cfg.mlflow.run_name,
+                           username=username)
+    experiment_link = exp_track.get_link()
+
+    data_paths = {'train_path': train_path,
+                  'test_path': test_path}
+
+
+    background_tasks.add_task(train_func,
+                              exp_track,
+                              cfg,
+                              data_paths)
+
+    return {'message': 'ok', 'url': experiment_link}
 
 
 @app.post("/train/file/")
@@ -100,22 +101,20 @@ async def train(username: str,
     if test_file:
         test_path = save_data(test_file, path)
 
+    exp_track = ExpTracker(exp_name=cfg.mlflow.exp_name,
+                           run_name=cfg.mlflow.run_name,
+                           username=username)
+    experiment_link = exp_track.get_link()
 
+    data_paths = {'train_path': train_path,
+                  'test_path': test_path}
 
-    kv = {'test': 0.1, 'train': 10}
-    # make all checks
-    """
-    config - correct
-    data is ok
-    mlflow proj can be created
+    background_tasks.add_task(train_func,
+                              exp_track,
+                              cfg,
+                              data_paths)
 
-    run training
-    """
-    url = 'http:basic-mlflow-uri'
-    exp_id = '1234'
-    run_id = 'efvwewpijnegb0203tguoqnt'
-    background_tasks.add_task(train_func, kv=kv)
-    return {'message': 'ok', 'url': f"{url}/#/experiments/{exp_id}/runs/{run_id}"}
+    return {'message': 'ok', 'url': experiment_link}
 
 
 @app.post("/run")
@@ -127,6 +126,8 @@ async def run(model_link: str,
 
 @app.post("/export")
 async def export(params: ExportModel):
+    pass
+
     # try:
     #     local_artifact_path = load_model_artifacts(params)
     #     model_dict = get_params(local_artifact_path)
