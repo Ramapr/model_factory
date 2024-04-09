@@ -1,11 +1,13 @@
 import mlflow
 import torch
+import os
 
 from torch.utils.data import random_split, DataLoader
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
+from mlflow.models.signature import infer_signature
 
 
 
@@ -15,6 +17,7 @@ def get_loaders(train_set,
                 bs: int,
                 workers: int
                 ):
+
     # split the train set into two
     train_set_size = int(len(train_set) * \
                          train_test_split)
@@ -65,12 +68,11 @@ class ExpTracker:
     def get_link(self) -> str:
         return f"{self.url}/#/experiments/{self.exp_id}/runs/{self.run_id}"
 
-
-    def get_setups(self) -> dict:
-        return {"experiment_name": self.exp_name,
-                "tracking_uri": self.url,
-                "run_id ": self.run_id
-                }
+    # def get_setups(self) -> dict:
+    #     return {"experiment_name": self.exp_name,
+    #             "tracking_uri": self.url,
+    #             "run_id ": self.run_id
+    #             }
 
     def stop(self):
         self.ml.end_run()
@@ -82,16 +84,17 @@ def main_train_function(config,
                         model,
                         mlflow_setups,
                         train_loader,
-                        valid_loader):
-
-    checkpoints_dir
+                        valid_loader,
+                        data_signature,
+                        exp_state):
+    # **params_info, **prep_info, **model_layers
 
     mlf_logger = MLFlowLogger(**{**mlflow_setups, **{'log_model':"all"}})
-        # experiment_name= # mlflow.get_experiment(mlflow.active_run().info.experiment_id).name,
-        # tracking_uri=mlflow.get_tracking_uri(),
-        # run_id=mlflow.active_run().info.run_id,
-        # log_model=config.mlflow.type,
-        # )
+    # experiment_name= # mlflow.get_experiment(mlflow.active_run().info.experiment_id).name,
+    # tracking_uri=mlflow.get_tracking_uri(),
+    # run_id=mlflow.active_run().info.run_id,
+    # log_model=config.mlflow.type,
+    # )
 
     e_stop = EarlyStopping(monitor=config.early_stop.monitor ,
                            min_delta=config.early_stop.min_delta ,
@@ -114,7 +117,7 @@ def main_train_function(config,
                       log_every_n_steps=config.trainer.log_every,
                       max_epochs=config.trainer.max_epochs,
                       enable_checkpointing=config.trainer.enable_checkpointing,
-                      default_root_dir=checkpoints_dir,
+                      default_root_dir=os.environ["CHECKPOINT_DIR"],
                       logger=mlf_logger,
                       callbacks=[e_stop, checkpoint_callback]
                       )
@@ -122,11 +125,12 @@ def main_train_function(config,
     trainer.fit(model, train_loader, valid_loader)
 
     mlf_logger.experiment.log_artifact(run_id=mlf_logger.run_id,
-                                       local_path=checkpoint_callback.best_model_path)  # , infer_signature())
+                                       local_path=checkpoint_callback.best_model_path)
 
     mlf_logger.experiment.log_dict(run_id=mlf_logger.run_id,
-                                   dictionary={**params_info, **prep_info, **model_layers},
+                                   dictionary=exp_state,
                                    artifact_file='info.json')
 
-    x_ex, y_ex = train_set.__getitem__(0)
-    signature = infer_signature(x_ex.numpy()[None, :], y_ex.numpy()[None, :])
+    signature = infer_signature(data_signature.values())
+
+    mlflow.pytorch.log_model(model, 'mdllol', signature=signature)
