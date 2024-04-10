@@ -96,9 +96,9 @@ class Mlflow(BaseModel):
         return run_name
 
 
-# class InferenceData(BaseModel):
-#     same_as_train: True
-#     preprocessing: Union[NormScaleParam, None]
+class InferenceData(BaseModel):
+    same_as_train: bool = True
+    preprocessing: NormScaleParam
 
 
 class ConfigRun(BaseModel):
@@ -108,7 +108,7 @@ class ConfigRun(BaseModel):
     chkp: CheckPoint
     trainer: Trainer
     mlflow: Mlflow
-    # inf_data: Optional[InferenceData] = None
+    inf_data: Optional[InferenceData] = None
 
 
 class DataURL(BaseModel):
@@ -117,7 +117,6 @@ class DataURL(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, url: str) -> str:
-        pass
         # "s3://{bucket}/path/file.csv"
         if not url.startswith("s3"):
             raise ValueError()
