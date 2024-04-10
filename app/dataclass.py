@@ -1,18 +1,20 @@
+from typing import Optional
 from fastapi import UploadFile
-from pydantic import BaseModel, ConfigDict, field_validator
-
+from pydantic import BaseModel, field_validator
+# from pydantic import ConfigDict
+from typing import Union
 
 class CAutoencoderParam(BaseModel):
     lr: float = 1e-3
-    hidden_dim: int | None = None
-    botlneck: int | None = None
+    hidden_dim: Optional[int] = None
+    botlneck: Optional[int] = None
     skip_ouput_features: int
 
 
 class AutoencoderParam(BaseModel):
     lr: float = 1e-3
-    hidden_dim: int | None = None
-    botlneck: int | None = None
+    hidden_dim: Optional[int] = None
+    botlneck: Optional[int] = None
 
     @field_validator("hidden_dim")
     @classmethod
@@ -51,7 +53,7 @@ class DataPrepareParams(BaseModel):
 
 
 class ModelParams(BaseModel):
-    params: AutoencoderParam | CAutoencoderParam
+    params: Union[AutoencoderParam, CAutoencoderParam]
 
 
 class EarlyStop(BaseModel):
@@ -94,9 +96,9 @@ class Mlflow(BaseModel):
         return run_name
 
 
-class InferenceData(BaseModel):
-    same_as_train: True
-    preprocessing: NormScaleParam | None
+# class InferenceData(BaseModel):
+#     same_as_train: True
+#     preprocessing: Union[NormScaleParam, None]
 
 
 class ConfigRun(BaseModel):
@@ -106,12 +108,25 @@ class ConfigRun(BaseModel):
     chkp: CheckPoint
     trainer: Trainer
     mlflow: Mlflow
-    inf_data: InferenceData | None = None
+    # inf_data: Optional[InferenceData] = None
 
 
 class DataURL(BaseModel):
-    pass
+    url: str
 
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, url: str) -> str:
+        pass
+        # "s3://{bucket}/path/file.csv"
+        if not url.startswith("s3"):
+            raise ValueError()
+        parts = url[5:].split('/')
+        if len(parts) < 1:
+            raise ValueError()
+        if parts[-1].split('.') in ['csv', 'parquet']:
+            raise ValueError()
+        return url
 
 class TrainRequest(BaseModel):
     username: str
