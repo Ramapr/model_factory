@@ -1,6 +1,17 @@
 # model_factory
 service
 
+Features \ Hints :
+1) use BackgroundTasks for `train/` method
+2) adding new model to server = add directory to `app/models/`
+3) enable `metrics/` based on Prometheus
+4) enable logging based on Sentry
+
+
+## methods 
+
+
+
 # How to start
 
 ## before start
@@ -20,8 +31,7 @@ install
 
 ```bash
 $ conda create --name {name} python==3.8.5 -y
-$ conda activate
-
+$ conda activate {name}
 $ pip install -r requirements.txt
 ```
 
@@ -36,6 +46,7 @@ $ uvicorn app:app --reload
 ```bash
 $ cd model_factory/app
 $ docker build --tag model_factory:latest .
+$ docker run ...
 ```
 
 # Adding new Model
@@ -45,4 +56,5 @@ $ docker build --tag model_factory:latest .
 3. add config file -- `config.yaml`
 
 
-# Limits and (SysDes)
+# Capabilities and limitations
+
