@@ -4,8 +4,8 @@ service
 Features \ Hints :
 1) use BackgroundTasks for `train/` method
 2) adding new model to server = add directory to `app/models/`
-3) enable `metrics/` based on Prometheus
-4) enable logging based on Sentry
+3) enable `metrics/` based on [Prometheus](https://github.com/trallnag/prometheus-fastapi-instrumentator)
+4) enable logging based on [Sentry](https://docs.sentry.io/platforms/python/)
 
 
 ## methods 
