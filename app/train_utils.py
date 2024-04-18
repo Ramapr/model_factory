@@ -8,11 +8,11 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from torch.utils.data import DataLoader, random_split
 
+from utils import select_dset, select_model, drop_files_from_dir
 
 def get_loaders(
     train_set, train_test_split: float, splittype: str, bs: int, workers: int
 ):
-
     # split the train set into two
     train_set_size = int(len(train_set) * train_test_split)
     valid_set_size = len(train_set) - train_set_size
@@ -25,20 +25,18 @@ def get_loaders(
         )
 
     train_loader = DataLoader(train_set, batch_size=bs, num_workers=workers)
-
     valid_loader = DataLoader(valid_set, batch_size=bs, num_workers=workers)
 
     x_ex, y_ex = train_set.__getitem__(0)
     in_out_signature = {"x": x_ex.numpy()[None, :], "y": y_ex.numpy()[None, :]}
 
-    return {"train": train_loader, "val": valid_loader, "signature": in_out_signature}
+    return train_loader, valid_loader, in_out_signature
 
 
 class ExpTracker:
     def __init__(self, exp_name: str, run_name: str, username: str):
-
         self.ml = mlflow
-        self.ml.set_tracking_uri(credits["URL"])  # os.get
+        self.ml.set_tracking_uri(os.environ["URL"])
         self.ml.set_experiment(exp_name)
         self.ml.pytorch.autolog()
         self.ml.start_run(run_name=run_name)
@@ -56,27 +54,22 @@ class ExpTracker:
     def get_link(self) -> str:
         return f"{self.url}/#/experiments/{self.exp_id}/runs/{self.run_id}"
 
-    # def get_setups(self) -> dict:
-    #     return {"experiment_name": self.exp_name,
-    #             "tracking_uri": self.url,
-    #             "run_id ": self.run_id
-    #             }
+    def get_setups(self) -> dict:
+        return {"experiment_name": self.exp_name,
+                "tracking_uri": self.url,
+                "run_id ": self.run_id
+                }
 
     def stop(self):
         self.ml.end_run()
 
 
-def main_train_function(
-    config, model, mlflow_setups, train_loader, valid_loader, data_signature, exp_state
+def training_function(
+    config, model, tracker, train_loader, valid_loader, data_signature, exp_state
 ):
     # **params_info, **prep_info, **model_layers
-
-    mlf_logger = MLFlowLogger(**{**mlflow_setups, **{"log_model": "all"}})
-    # experiment_name= # mlflow.get_experiment(mlflow.active_run().info.experiment_id).name,
-    # tracking_uri=mlflow.get_tracking_uri(),
-    # run_id=mlflow.active_run().info.run_id,
-    # log_model=config.mlflow.type,
-    # )
+    # pipelines.model_train
+    mlf_logger = MLFlowLogger(**{**tracker.get_setups(), **{"log_model": "all"}})
 
     e_stop = EarlyStopping(
         monitor=config.early_stop.monitor,
@@ -120,4 +113,46 @@ def main_train_function(
 
     signature = infer_signature(data_signature.values())
 
-    mlflow.pytorch.log_model(model, "mdllol", signature=signature)
+    tracker.pytorch.log_model(model, "mdl_sig", signature=signature)
+    return mlf_logger, model
+
+
+
+def main(exp_track, cfg, data_paths):
+    # join config
+    # from base and
+
+    data = preprocess_data(data_paths["train_path", cfg])
+
+    # data_preprocess():
+    # data , state
+    state = {}
+
+    dataset = select_dset(config.params)(data)
+    model = select_model(config.params)(**config.params )
+    train_loader, valid_loader, data_signature = get_loaders(dataset)
+    # {"train":  "val" "signature" }
+
+    # log base config
+    training_function(cfg,
+                      model,
+                      exp_track,
+                      train_loader,
+                      valid_loader,
+                      data_signature,
+                      state)
+
+
+    if 'test' in data_paths.keys():
+        pass
+
+    # CLEAR DIR ./runs
+    # maybe better way create temp-dir-base-hash and delete it
+    # here we clear while directory
+    drop_files_from_dir('./runs')
+
+    print(os.listdir('./tmp'))
+    # CLEAR DIR ./tmp
+    drop_files_from_dir('./tmp')
+    print(os.listdir('./tmp'))
+    exp_track.stop()
