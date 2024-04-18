@@ -1,18 +1,17 @@
 # server imports
-# from starlette.datastructures import UploadFile as upf
 import json
 import os
-from io import save_data
+from io_utils import save_data
 from pathlib import Path
-from time import sleep
+from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile
 
 from dataclass import ConfigRun, DataURL, ExportModel
-from train_utils import ExpTracker
-from utils import check_env_var, drop_files_from_dir, get_list_of_configs, select_model
 
-# from export_utils import load_model_artifacts, get_params, select_model, load_checkpoint, dump_model
+from utils import check_env_var, drop_files_from_dir, get_list_of_configs, select_model
+from train_utils import ExpTracker
+from export_utils import load_model, load_model_artifacts, dump_model
 
 
 app = FastAPI(
@@ -41,9 +40,17 @@ async def startup_event():
     # create_dir(ROOT, "tmp"))
 
 
-@app.get("/models_configs")
-async def get_models_configs():
-    return {"message": "ok", "content": json.dump(get_list_of_configs())}
+@app.get("/all_models_configs")
+async def get_all_models_configs():
+    return {"message": "ok", "content": get_list_of_configs()}
+
+
+@app.get("/config/{model_name}")
+async def get_models_configs(model_name: str):
+    configs = get_list_of_configs()
+    if model_name not in configs.keys():
+        raise HTTPException(status_code=404, detail=f"config for '{model_name}' not found")
+    return {"message": "ok", "content": configs[model_name]}
 
 
 def train_func(*args):
@@ -53,15 +60,14 @@ def train_func(*args):
     # main_train_function()
 
 
-@app.post("/train")
-async def train(
-    username: str,
-    cfg: ConfigRun,
-    data_link: str,  # DataURL,
-    test_link: str,  # DataURL,
-    background_tasks: BackgroundTasks,
+@app.post("/train/link_files/{model_name}")
+async def train(model_name:str,
+                username: str,
+                cfg: ConfigRun,
+                data_link: str,  # DataURL,
+                test_link: str,  # DataURL,
+                background_tasks: BackgroundTasks,
 ):
-
     path = os.environ["tmp_dir"]
     train_path = save_data(data_link, path)
     if test_link:
@@ -76,15 +82,14 @@ async def train(
     return {"message": "ok", "url": experiment_link}
 
 
-@app.post("/train/file/")
-async def train(
-    username: str,
-    cfg: ConfigRun,
-    data_file: UploadFile,
-    test_file: UploadFile | None,
-    background_tasks: BackgroundTasks,
+@app.post("/train/upload_files/{model_name}")
+async def train_on_file(model_name:str,
+                        username: str,
+                        cfg: ConfigRun,
+                        data_file: UploadFile,
+                        background_tasks: BackgroundTasks,
+                        test_file: Optional[UploadFile] = None,
 ):
-
     path = os.environ["tmp_dir"]
     train_path = save_data(data_file, path)
     if test_file:
@@ -102,24 +107,21 @@ async def train(
 
 @app.post("/run")
 async def run(model_link: str, val_data_link: str):
+    print(model_link)
+    print(val_data_link)
+    # local_artifact_path = load_model_artifacts(params)
+    # model = load_model(local_artifact_path)
+
     pass
 
 
-@app.post("/export")
+@app.post("/export/{project_id}/{model_hash}")
 async def export(params: ExportModel):
-    pass
-
-    # try:
-    #     local_artifact_path = load_model_artifacts(params)
-    #     model_dict = get_params(local_artifact_path)
-    #     model = select_model(model_dict['model_type'])(**model_dict['layers'])
-
-    #     checkpoint = load_checkpoint(local_artifact_path)
-    #     model.load_state_dict(checkpoint["state_dict"])
-    #     model_in_bytes = dump_model(model, local_artifact_path)
-
-    #     drop_files_from_dir(os.environ["cache_dir"])
-    #     return {'message': 'ok', 'file_bytes': str(model_in_bytes) }
-
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=f'error {e}')
+    try:
+        local_artifact_path = load_model_artifacts(params)
+        model = load_model(local_artifact_path)
+        model_in_bytes = dump_model(model, local_artifact_path)
+        drop_files_from_dir(os.environ["cache_dir"])
+        return {'message': 'ok', 'file_bytes': str(model_in_bytes)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'error {e}')
