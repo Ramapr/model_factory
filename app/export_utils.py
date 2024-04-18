@@ -1,11 +1,11 @@
 # for export
-
+from typing import Optional
 import json
 import os
 
 import torch
 from mlflow.artifacts import download_artifacts
-
+from utils import select_model
 
 def load_model_artifacts(params) -> str:
     return download_artifacts(
@@ -19,9 +19,9 @@ def get_params(path: str) -> dict:
     return info
 
 
-def load_checkpoint(path: str, type: str | None = None) -> str:
+def load_checkpoint(path: str,  type: Optional[str] = None) -> str:
     cfiles = [i for i in os.listdir(path) if i.endswith(".ckpt")]
-    # print(wfiles)
+
     if not len(cfiles):
         raise Exception("ckpt not find")
     if len(cfiles) > 1 and type is None:
@@ -46,3 +46,10 @@ def dump_model(model, path):
         model_file = f.read()
 
     return model_file
+
+def load_model(path):
+    model_dict = get_params(path)
+    model = select_model(model_dict['model_type'])(**model_dict['model_params'])
+    checkpoint = load_checkpoint(path)
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
