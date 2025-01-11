@@ -40,13 +40,16 @@ async def startup_event():
     # create_dir(ROOT, "tmp"))
 
 
-@app.get("/all_models_configs")
+@app.get("/configs")
 async def get_all_models_configs():
     return {"message": "ok", "content": get_list_of_configs()}
 
 
 @app.get("/config/{model_name}")
-async def get_models_configs(model_name: str):
+async def get_model_config(model_name: str):
+    """
+    get config for specified model name
+    """
     configs = get_list_of_configs()
     if model_name not in configs.keys():
         raise HTTPException(status_code=404, detail=f"config for '{model_name}' not found")
@@ -54,6 +57,9 @@ async def get_models_configs(model_name: str):
 
 
 def train_func(*args):
+    """
+    main train file 
+    """
     # remove
     pass
     # model = select_model()(  config.params )
@@ -107,6 +113,9 @@ async def train_on_file(model_name:str,
 
 @app.post("/run")
 async def run(model_link: str, val_data_link: str):
+    """
+    
+    """
     print(model_link)
     print(val_data_link)
     # local_artifact_path = load_model_artifacts(params)
