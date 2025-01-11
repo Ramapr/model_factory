@@ -122,14 +122,16 @@ def main(exp_track, cfg, data_paths):
     # join config
     # from base and
 
-    data = preprocess_data(data_paths["train_path", cfg])
+    data = None
+    # 
+    # data = preprocess_data(data_paths["train_path", cfg])
 
     # data_preprocess():
     # data , state
     state = {}
 
-    dataset = select_dset(config.params)(data)
-    model = select_model(config.params)(**config.params )
+    dataset = select_dset(cfg.params)(data)
+    model = select_model(cfg.params)(**config.params)
     train_loader, valid_loader, data_signature = get_loaders(dataset)
     # {"train":  "val" "signature" }
 
