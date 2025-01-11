@@ -1,15 +1,13 @@
 # server imports
-import json
 import os
 from io_utils import save_data
-from pathlib import Path
 from typing import Optional
-
+ 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile
-
-from dataclass import ConfigRun, DataURL, ExportModel
-
-from utils import check_env_var, drop_files_from_dir, get_list_of_configs, select_model
+ 
+from dataclass import ConfigRun, ExportModel
+ 
+from utils import drop_files_from_dir, get_list_of_configs
 from train_utils import ExpTracker
 from export_utils import load_model, load_model_artifacts, dump_model
 
@@ -52,7 +50,9 @@ async def get_model_config(model_name: str):
     """
     configs = get_list_of_configs()
     if model_name not in configs.keys():
-        raise HTTPException(status_code=404, detail=f"config for '{model_name}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"config for '{model_name}' not found"
+        )
     return {"message": "ok", "content": configs[model_name]}
 
 
