@@ -2,11 +2,11 @@
 import os
 from io_utils import save_data
 from typing import Optional
- 
+
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile
- 
+
 from dataclass import ConfigRun, ExportModel
- 
+
 from utils import drop_files_from_dir, get_list_of_configs
 from train_utils import ExpTracker
 from export_utils import load_model, load_model_artifacts, dump_model
@@ -58,7 +58,7 @@ async def get_model_config(model_name: str):
 
 def train_func(*args):
     """
-    main train file 
+    main train file
     """
     # remove
     pass
@@ -66,13 +66,15 @@ def train_func(*args):
     # main_train_function()
 
 
+
 @app.post("/train/link_files/{model_name}")
-async def train(model_name:str,
-                username: str,
-                cfg: ConfigRun,
-                data_link: str,  # DataURL,
-                test_link: str,  # DataURL,
-                background_tasks: BackgroundTasks,
+async def train(
+    model_name: str,
+    username: str,
+    cfg: ConfigRun,
+    data_link: str,  # DataURL,
+    test_link: str,  # DataURL,
+    background_tasks: BackgroundTasks,
 ):
     path = os.environ["tmp_dir"]
     train_path = save_data(data_link, path)
@@ -89,12 +91,13 @@ async def train(model_name:str,
 
 
 @app.post("/train/upload_files/{model_name}")
-async def train_on_file(model_name:str,
-                        username: str,
-                        cfg: ConfigRun,
-                        data_file: UploadFile,
-                        background_tasks: BackgroundTasks,
-                        test_file: Optional[UploadFile] = None,
+async def train_on_file(
+    model_name: str,
+    username: str,
+    cfg: ConfigRun,
+    data_file: UploadFile,
+    background_tasks: BackgroundTasks,
+    test_file: Optional[UploadFile] = None,
 ):
     path = os.environ["tmp_dir"]
     train_path = save_data(data_file, path)
@@ -113,14 +116,11 @@ async def train_on_file(model_name:str,
 
 @app.post("/run")
 async def run(model_link: str, val_data_link: str):
-    """
-    
-    """
+    """ """
     print(model_link)
     print(val_data_link)
     # local_artifact_path = load_model_artifacts(params)
     # model = load_model(local_artifact_path)
-
     pass
 
 
@@ -131,6 +131,6 @@ async def export(params: ExportModel):
         model = load_model(local_artifact_path)
         model_in_bytes = dump_model(model, local_artifact_path)
         drop_files_from_dir(os.environ["cache_dir"])
-        return {'message': 'ok', 'file_bytes': str(model_in_bytes)}
+        return {"message": "ok", "file_bytes": str(model_in_bytes)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'error {e}')
+        raise HTTPException(status_code=500, detail=f"error {e}")
